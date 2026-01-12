@@ -1,1 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hire Thanima – Play the Decision</title>
+
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#020617;
+  color:#e5e7eb;
+}
+
+section{
+  min-height:100vh;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:40px;
+}
+section.active{display:flex}
+
+.card{
+  background:rgba(255,255,255,.06);
+  padding:32px;
+  border-radius:22px;
+  max-width:900px;
+  width:100%;
+  box-shadow:0 0 40px rgba(59,130,246,.15);
+}
+
+h1{font-size:2.6rem;margin:0}
+h2{font-weight:400;color:#93c5fd;margin:8px 0 20px}
+button{
+  padding:12px 26px;
+  border-radius:999px;
+  border:0;
+  background:#3b82f6;
+  color:#fff;
+  font-size:1rem;
+  cursor:pointer;
+}
+
+/* LEVEL 1 */
+.dice-wrap{perspective:1000px;display:flex;justify-content:center;margin:30px 0}
+.dice{width:120px;height:120px;position:relative;transform-style:preserve-3d;transition:transform 1.2s}
+.face{position:absolute;width:120px;height:120px;background:#020617;border:2px solid #3b82f6;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700}
+.f1{transform:rotateY(0deg) translateZ(60px)}
+.f2{transform:rotateY(90deg) translateZ(60px)}
+.f3{transform:rotateY(180deg) translateZ(60px)}
+.f4{transform:rotateY(-90deg) translateZ(60px)}
+.f5{transform:rotateX(90deg) translateZ(60px)}
+.f6{transform:rotateX(-90deg) translateZ(60px)}
+
+/* LEVEL 2 */
+.pick{color:#fff;cursor:pointer;border-bottom:2px solid transparent}
+.pick.good{color:#22c55e;border-bottom:2px solid #22c55e}
+.pick.bad{color:#ef4444;border-bottom:2px solid #ef4444}
+.score{display:flex;justify-content:space-between;margin-top:12px}
+
+/* LEVEL 3 */
+.grid{display:grid;grid-template-columns:repeat(5,56px);gap:10px;justify-content:center;margin:20px 0}
+.cell{width:56px;height:56px;border:2px solid #334155;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.3rem}
+.correct{background:#16a34a}
+
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+</style>
+</head>
+
+<body>
+
+<section id="l1" class="active">
+  <div class="card">
+    <h1>You know the rules…</h1>
+    <h2>Roll the dice 🎲</h2>
+    <p>You may proceed only if fate rolls a 6.</p>
+    <div class="dice-wrap">
+      <div class="dice" id="dice">
+        <div class="face f1">1</div><div class="face f2">2</div><div class="face f3">3</div>
+        <div class="face f4">4</div><div class="face f5">5</div><div class="face f6">6</div>
+      </div>
+    </div>
+    <button id="rollBtn">Roll</button>
+    <p id="diceText"></p>
+    <button id="to2" style="display:none">Proceed ➜</button>
+  </div>
+</section>
+
+<section id="l2">
+  <div class="card">
+    <h1>Level 2</h1>
+    <h2>Find the signals hidden in the comments</h2>
+
+    <div style="background:#000;border-radius:16px;padding:20px">
+      <p><strong>@rahulsinghrajput111</strong> · <span class="pick">1 mo ago</span><br>
+        <span class="pick">Had fun</span> watching <span class="pick">this</span>! Looking <span class="pick">forward</span> to next game!
+      </p>
+      <p><strong>@ArunaRama-q1k</strong> · 1 mo ago<br>
+        <span class="pick">Ughh fineee</span> I’ll subscribe to another game show. <span class="pick">Lovely setting</span> and <span class="pick">edit</span> ❤️
+      </p>
+      <p><strong>@shreemayeedas3136</strong> · 1 mo ago<br>
+        <span class="pick">Wohoo excited</span>
+      </p>
+      <p><strong>@arpitnandi7540</strong> · 1 mo ago<br>
+        <span class="pick">Amazing</span> <span class="pick">show</span>, <span class="pick">nice</span>
+      </p>
+    </div>
+
+    <div class="score">
+      <div>Good: <span id="g">0</span>/<span id="gt">0</span> <span id="goodNote" style="color:#22c55e"></span></div>
+      <div>Bad: <span id="b">0</span>/<span id="bt">0</span> <span id="badNote" style="color:#ef4444"></span></div>
+    </div>
+    <button id="to3" style="display:none">Final Step ➜</button>
+  </div>
+</section>
+
+<section id="l3">
+  <div class="card">
+    <h1>Thanima is ____</h1>
+    <p>Guess the Wordle. 5 attempts.</p>
+    <div class="grid" id="grid"></div>
+    <input id="guess" maxlength="5" style="text-transform:uppercase">
+    <button id="submit">Submit</button>
+    <h2 id="win" style="display:none;color:#22c55e">🎉 YOU WIN!! 🎉</h2>
+  </div>
+</section>
+
+<script>
+/* NAV */
+function go(n){document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));document.getElementById('l'+n).classList.add('active')}
+
+/* LEVEL 1 */
+function rollDice(){
+  const dice=document.getElementById('dice');
+  const result=Math.floor(Math.random()*6)+1;
+  const r={1:'rotateY(0deg)',2:'rotateY(-90deg)',3:'rotateY(-180deg)',4:'rotateY(90deg)',5:'rotateX(-90deg)',6:'rotateX(90deg)'};
+  dice.style.transform=`rotateX(${Math.random()*360}deg) rotateY(${Math.random()*360}deg) ${r[result]}`;
+  diceText.textContent=`You rolled ${result}`;
+  if(result===6){diceText.textContent='Rolled a 6. Destiny agrees.';to2.style.display='inline-block'}
+}
+rollBtn.onclick=rollDice;to2.onclick=()=>go(2);
+
+/* LEVEL 2 */
+const gSpan=document.getElementById('g');
+const bSpan=document.getElementById('b');
+const gtSpan=document.getElementById('gt');
+const btSpan=document.getElementById('bt');
+const goodNote=document.getElementById('goodNote');
+const badNote=document.getElementById('badNote');
+const to3=document.getElementById('to3');
+
+const goodMap={
+  'Had fun':'always',
+  'this':'never that, always this',
+  'forward':'never backwards',
+  'Lovely setting':'ideal',
+  'Wohoo excited':'me',
+  'Amazing':'high praise',
+  'show':'show and tell'
+};
+const badMap={
+  '1 mo ago':'irrelevant timestamp',
+  'Ughh fineee':'reluctant praise',
+  'nice':'too generic',
+  'edit':'no filter needed'
+};
+
+let gc=0,bc=0;
+const gt=Object.keys(goodMap).length;
+const bt=Object.keys(badMap).length;
+
+gtSpan.textContent=gt;
+btSpan.textContent=bt;
+
+document.querySelectorAll('.pick').forEach(p=>p.onclick=()=>{
+  const t=p.innerText;
+  if(goodMap[t]){p.classList.add('good');goodNote.textContent=goodMap[t];gSpan.textContent=++gc}
+  if(badMap[t]){p.classList.add('bad');badNote.textContent=badMap[t];bSpan.textContent=++bc}
+  p.onclick=null;
+  if(gc===gt && bc===bt)to3.style.display='inline-block';
+});
+
+to3.onclick=()=>go(3);
+
+/* LEVEL 3 – WORDLE */
+const ANSWER='HIRED';
+const grid=document.getElementById('grid');
+let row=0;
+
+for(let i=0;i<30;i++){
+  const c=document.createElement('div');
+  c.className='cell';
+  grid.appendChild(c);
+}
+
+submit.onclick=()=>{
+  if(row>=6) return;
+  const v=guess.value.toUpperCase();
+  if(v.length!==5) return;
+  for(let i=0;i<5;i++){
+    const cell=grid.children[row*5+i];
+    cell.textContent=v[i];
+    if(v[i]===ANSWER[i]) cell.classList.add('correct');
+    else if(ANSWER.includes(v[i])) cell.style.background='#ca8a04';
+    else cell.style.background='#374151';
+  }
+  if(v===ANSWER){win.style.display='block';confetti();}
+  row++;guess.value='';
+};
+
+function confetti(){
+  for(let i=0;i<80;i++){
+    const s=document.createElement('span');
+    s.style.position='fixed';
+    s.style.left=Math.random()*100+'%';
+    s.style.top='-10px';
+    s.style.width='8px';
+    s.style.height='8px';
+    s.style.background=['#22c55e','#3b82f6','#eab308'][Math.floor(Math.random()*3)];
+    s.style.animation=`fall ${Math.random()*3+2}s linear`;
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),4000);
+  }
+}
+</script>
+</body>
+</html>
 
